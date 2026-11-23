@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="uk">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AI-перекладач емоцій</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<main class="wrap">
+  <header>
+    <h1>🎭 AI-перекладач емоцій</h1>
+    <p class="sub">Напишіть, що відчуваєте, — нейромережа DistilBERT визначить емоцію, покаже емодзі та дасть пораду.</p>
+  </header>
+
+  <form method="post" class="card" id="form">
+    <label for="text">Ваш текст <span class="hint">(англійською — модель навчена на датасеті GoEmotions)</span></label>
+    <textarea id="text" name="text" rows="4" maxlength="1000" placeholder="Наприклад: I passed my exam today, I am so happy!">{{ text }}</textarea>
+    <div class="examples">
+      <span>Приклади:</span>
+      {% for ex in examples %}<button type="button" class="chip" data-text="{{ ex }}">{{ ex[:28] }}…</button>{% endfor %}
+    </div>
+    <button type="submit" class="btn">Визначити емоцію</button>
+    {% if error %}<p class="error">{{ error }}</p>{% endif %}
+  </form>
+
+  {% if result %}
+  <section class="card result" style="--accent: {{ result.color }}">
+    <div class="main">
+      <div class="emoji">{{ result.emoji }}</div>
+      <div>
+        <div class="label">Емоція</div>
+        <div class="name">{{ result.name }}</div>
+      </div>
+    </div>
+    <p class="advice">{{ result.advice }}</p>
+    <blockquote>«{{ result.quote }}»<cite>— {{ result.author }}</cite></blockquote>
+
+    <div class="cols">
+      <div>
+        <h3>Базові емоції</h3>
+        {% for g in result.groups %}
+        <div class="bar">
+          <span class="bname">{{ g.emoji }} {{ g.name }}</span>
+          <span class="track"><span class="fill" style="width: {{ g.score }}%; background: {{ g.color }}"></span></span>
+          <span class="val">{{ g.score }}%</span>
+        </div>
+        {% endfor %}
+      </div>
+      <div>
+        <h3>Топ-3 відтінки (з 28)</h3>
+        <ul class="details">
+          {% for d in result.details %}<li><span>{{ d.emoji }} {{ d.name }}</span><b>{{ d.score }}%</b></li>{% endfor %}
+        </ul>
+      </div>
+    </div>
+  </section>
+  {% endif %}
+
+  <footer>Flask + ONNX Runtime · модель distilbert-base-uncased-go-emotions · API: <code>POST /api/analyze</code></footer>
+</main>
+<script>
+  document.querySelectorAll('.chip').forEach(function (b) {
+    b.addEventListener('click', function () {
+      document.getElementById('text').value = b.dataset.text;
+      document.getElementById('form').submit();
+    });
+  });
+</script>
+</body>
+</html>
